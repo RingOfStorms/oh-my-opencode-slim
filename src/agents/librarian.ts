@@ -4,6 +4,7 @@ import type { AgentDefinition } from "./orchestrator";
 export function createLibrarianAgent(model: string): AgentDefinition {
   return {
     name: "librarian",
+    description: "External documentation and library research",
     config: {
       model,
       temperature: 0.1,

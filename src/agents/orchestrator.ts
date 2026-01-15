@@ -2,21 +2,29 @@ import type { AgentConfig } from "@opencode-ai/sdk";
 
 export interface AgentDefinition {
   name: string;
+  description: string;
   config: AgentConfig;
 }
 
-export function createOrchestratorAgent(model: string): AgentDefinition {
+export function createOrchestratorAgent(model: string, subAgents: AgentDefinition[]): AgentDefinition {
+  const agentTable = subAgents
+    .map((a) => `| @${a.name} | ${a.description} |`)
+    .join("\n");
+
+  const prompt = ORCHESTRATOR_PROMPT_TEMPLATE.replace("{{AGENT_TABLE}}", agentTable);
+
   return {
     name: "orchestrator",
+    description: "AI coding orchestrator with access to specialized subagents",
     config: {
       model,
       temperature: 0.1,
-      system: ORCHESTRATOR_PROMPT,
+      system: prompt,
     },
   };
 }
 
-const ORCHESTRATOR_PROMPT = `<Role>
+const ORCHESTRATOR_PROMPT_TEMPLATE = `<Role>
 You are an AI coding orchestrator with access to specialized subagents.
 
 **Core Competencies**:
@@ -27,13 +35,9 @@ You are an AI coding orchestrator with access to specialized subagents.
 </Role>
 
 <Subagents>
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| @oracle | Architecture, debugging, code review | Complex decisions, after 2+ failed attempts |
-| @librarian | Docs, GitHub examples, library research | External library questions |
-| @explore | Fast codebase grep | "Find X", "Where is Y", codebase patterns |
-| @frontend-ui-ux-engineer | UI/UX implementation | Visual/styling changes |
-| @document-writer | Technical documentation | README, API docs |
+| Agent | Purpose / When to Use |
+|-------|-----------------------|
+{{AGENT_TABLE}}
 </Subagents>
 
 <Delegation>
@@ -47,11 +51,8 @@ background_task(agent="librarian", prompt="How does library X handle Y")
 \`\`\`
 
 ## When to Delegate
-- Frontend visual work → frontend-ui-ux-engineer
-- Documentation → document-writer  
-- Research → librarian (background)
-- Codebase search → explore (background, fire multiple)
-- Complex architecture → oracle (consult first)
+- Use the subagent most relevant to the task description.
+- Use background tasks for research or search while you continue working.
 </Delegation>
 
 <Workflow>

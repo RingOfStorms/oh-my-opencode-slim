@@ -4,6 +4,7 @@ import type { AgentDefinition } from "./orchestrator";
 export function createOracleAgent(model: string): AgentDefinition {
   return {
     name: "oracle",
+    description: "Architecture, debugging, and code review",
     config: {
       model,
       temperature: 0.1,

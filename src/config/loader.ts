@@ -73,16 +73,16 @@ export function loadPluginConfig(directory: string): PluginConfig {
       ...config,
       ...projectConfig,
       agents: deepMerge(config.agents, projectConfig.agents),
+      custom_agents: [
+        ...new Map([
+          ...(config.custom_agents ?? []).map((a) => [a.name, a] as const),
+          ...(projectConfig.custom_agents ?? []).map((a) => [a.name, a] as const),
+        ]).values(),
+      ],
       disabled_agents: [
         ...new Set([
           ...(config.disabled_agents ?? []),
           ...(projectConfig.disabled_agents ?? []),
-        ]),
-      ],
-      disabled_hooks: [
-        ...new Set([
-          ...(config.disabled_hooks ?? []),
-          ...(projectConfig.disabled_hooks ?? []),
         ]),
       ],
     };

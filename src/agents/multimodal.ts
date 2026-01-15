@@ -4,6 +4,7 @@ import type { AgentDefinition } from "./orchestrator";
 export function createMultimodalAgent(model: string): AgentDefinition {
   return {
     name: "multimodal-looker",
+    description: "Image and UI analysis",
     config: {
       model,
       temperature: 0.1,

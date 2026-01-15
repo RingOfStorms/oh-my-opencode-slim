@@ -32,6 +32,7 @@ The plugin follows a "Hub and Spoke" model:
 | **frontend-ui-ux** | Designer | Visual changes, CSS/styling, and React/Vue component polish. |
 | **document-writer** | Scribe | Technical documentation, READMEs, and inline code comments. |
 | **multimodal-looker** | Visionary | Analyzing screenshots, wireframes, or UI designs. |
+| **code-simplicity-reviewer** | Minimalist | Ruthless code simplification and YAGNI principle enforcement. |
 
 ---
 
@@ -52,27 +53,47 @@ The plugin provides three core tools to manage asynchronous work:
 
 You can customize the behavior of the plugin via the OpenCode configuration.
 
-### Customizing Agents
-In your `.opencode/config.json` (or via the plugin's config hook), you can override models or prompts:
+### Customizing & Adding Agents
+You can customize built-in agents or add entirely new ones in your `oh-my-opencode-lite.json` file.
+
+#### Adding a New Agent
+Simply define a `custom_agents` array. The Orchestrator will automatically learn when to use your new agent based on its `description`.
 
 ```json
 {
-  "oh-my-opencode-lite": {
-    "agents": {
-      "oracle": {
-        "model": "claude-3-5-sonnet",
-        "temperature": 0,
-        "prompt_append": "Always prioritize security in your reviews."
-      }
-    },
-    "disabled_agents": ["multimodal-looker"]
-  }
+  "custom_agents": [
+    {
+      "name": "sql-expert",
+      "description": "Schema design, query optimization, and complex joins",
+      "prompt": "You are a Senior DBA. Analyze the schema and provide optimized SQL...",
+      "model": "openai/gpt-4.5"
+    }
+  ]
+}
+```
+
+#### Overriding Built-in Agents
+```json
+{
+  "agents": {
+    "oracle": {
+      "model": "claude-3-5-sonnet",
+      "temperature": 0,
+      "prompt_append": "Always prioritize security in your reviews."
+    }
+  },
+  "disabled_agents": ["multimodal-looker"]
 }
 ```
 
 ---
 
 ## 👨‍💻 Development
+
+### Configuration Files
+The plugin looks for configuration in two places (and merges them):
+1.  **User Global**: `~/.config/opencode/oh-my-opencode-lite.json` (or OS equivalent)
+2.  **Project Local**: `./.opencode/oh-my-opencode-lite.json`
 
 ### Getting Started
 1.  **Install dependencies**:

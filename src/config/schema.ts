@@ -14,8 +14,14 @@ export type AgentConfig = z.infer<typeof AgentConfigSchema>;
 // Main plugin config
 export const PluginConfigSchema = z.object({
   agents: z.record(z.string(), AgentConfigSchema).optional(),
+  custom_agents: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+    prompt: z.string(),
+    model: z.string().optional(),
+    temperature: z.number().optional(),
+  })).optional(),
   disabled_agents: z.array(z.string()).optional(),
-  disabled_hooks: z.array(z.string()).optional(),
 });
 
 export type PluginConfig = z.infer<typeof PluginConfigSchema>;
@@ -28,7 +34,8 @@ export type AgentName =
   | "explore"
   | "frontend-ui-ux-engineer"
   | "document-writer"
-  | "multimodal-looker";
+  | "multimodal-looker"
+  | "code-simplicity-reviewer";
 
 export const DEFAULT_MODELS: Record<AgentName, string> = {
   orchestrator: "anthropic/claude-sonnet-4-5",
@@ -38,4 +45,5 @@ export const DEFAULT_MODELS: Record<AgentName, string> = {
   "frontend-ui-ux-engineer": "google/gemini-2.5-pro",
   "document-writer": "google/gemini-2.5-pro",
   "multimodal-looker": "google/gemini-2.5-flash",
+  "code-simplicity-reviewer": "anthropic/claude-sonnet-4-5",
 };
