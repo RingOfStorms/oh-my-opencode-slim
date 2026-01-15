@@ -1,5 +1,6 @@
 import { tool, type PluginInput, type ToolDefinition } from "@opencode-ai/plugin";
 import type { BackgroundTaskManager } from "../features";
+import { getAgentListDescription, getAgentNames } from "../agents";
 import {
   POLL_INTERVAL_MS,
   MAX_POLL_TIME_MS,
@@ -20,17 +21,20 @@ export function createBackgroundTools(
   ctx: PluginInput,
   manager: BackgroundTaskManager
 ): Record<string, ToolDefinition> {
+  const agentList = getAgentListDescription();
+  const agentNames = getAgentNames().join(", ");
+
   const background_task = tool({
     description: `Run agent task. Use sync=true to wait for result, sync=false (default) to run in background.
 
-Agents: explore (codebase grep), librarian (docs/GitHub), oracle (strategy), frontend (UI/UX), document-writer (docs).
+Agents: ${agentList}.
 
 Async mode returns task_id immediately - use \`background_output\` to get results.
 Sync mode blocks until completion and returns the result directly.`,
     args: {
       description: z.string().describe("Short description of the task (5-10 words)"),
       prompt: z.string().describe("The task prompt for the agent"),
-      agent: z.string().describe("Agent to use: explore, librarian, oracle, frontend, document-writer"),
+      agent: z.string().describe(`Agent to use: ${agentNames}`),
       sync: z.boolean().optional().describe("Wait for completion (default: false = async)"),
       session_id: z.string().optional().describe("Continue existing session (sync mode only)"),
     },

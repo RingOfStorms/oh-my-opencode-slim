@@ -22,27 +22,40 @@ function applyOverrides(agent: AgentDefinition, override: AgentOverrideConfig): 
   }
 }
 
-const SUBAGENT_FACTORIES: Omit<Record<AgentName, AgentFactory>, "orchestrator"> = {
-  oracle: createOracleAgent,
-  librarian: createLibrarianAgent,
-  explore: createExploreAgent,
-  "frontend-ui-ux-engineer": createFrontendAgent,
-  "document-writer": createDocumentWriterAgent,
-  "multimodal-looker": createMultimodalAgent,
-  "code-simplicity-reviewer": createSimplicityReviewerAgent,
-};
+type SubagentName = Exclude<AgentName, "orchestrator">;
+type SubagentInfo = { factory: AgentFactory; shortDesc: string };
+
+/** Short descriptions for each subagent (used in tool descriptions) */
+export const SUBAGENT_INFO = {
+  explore: { factory: createExploreAgent, shortDesc: "codebase grep" },
+  librarian: { factory: createLibrarianAgent, shortDesc: "docs/GitHub" },
+  oracle: { factory: createOracleAgent, shortDesc: "strategy" },
+  "frontend-ui-ux-engineer": { factory: createFrontendAgent, shortDesc: "UI/UX" },
+  "document-writer": { factory: createDocumentWriterAgent, shortDesc: "docs" },
+  "multimodal-looker": { factory: createMultimodalAgent, shortDesc: "image/visual analysis" },
+  "code-simplicity-reviewer": { factory: createSimplicityReviewerAgent, shortDesc: "code review" },
+} as const satisfies Record<SubagentName, SubagentInfo>;
+
+/** Generate agent list string for tool descriptions */
+export function getAgentListDescription(): string {
+  return (Object.entries(SUBAGENT_INFO) as [SubagentName, SubagentInfo][])
+    .map(([name, { shortDesc }]) => `${name} (${shortDesc})`)
+    .join(", ");
+}
+
+/** Get list of agent names */
+export function getAgentNames(): SubagentName[] {
+  return Object.keys(SUBAGENT_INFO) as SubagentName[];
+}
 
 export function createAgents(config?: PluginConfig): AgentDefinition[] {
   const disabledAgents = new Set(config?.disabled_agents ?? []);
   const agentOverrides = config?.agents ?? {};
 
   // 1. Gather all sub-agent proto-definitions
-  const protoSubAgents: AgentDefinition[] = [
-    ...Object.entries(SUBAGENT_FACTORIES).map(([name, factory]) => {
-      const model = DEFAULT_MODELS[name as AgentName];
-      return factory(model);
-    }),
-  ];
+  const protoSubAgents = (Object.entries(SUBAGENT_INFO) as [SubagentName, SubagentInfo][]).map(
+    ([name, { factory }]) => factory(DEFAULT_MODELS[name])
+  );
 
   // 2. Apply common filtering and overrides
   const allSubAgents = protoSubAgents
