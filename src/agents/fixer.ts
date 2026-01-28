@@ -1,4 +1,4 @@
-import type { AgentDefinition } from './orchestrator';
+import type { AgentDefinition } from './types';
 
 const FIXER_PROMPT = `You are Fixer - a fast, focused implementation specialist.
 

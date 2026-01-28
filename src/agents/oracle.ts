@@ -1,4 +1,4 @@
-import type { AgentDefinition } from './orchestrator';
+import type { AgentDefinition } from './types';
 
 const ORACLE_PROMPT = `You are Oracle - a strategic technical advisor.
 

@@ -1,4 +1,4 @@
-import type { AgentDefinition } from './orchestrator';
+import type { AgentDefinition } from './types';
 
 const EXPLORER_PROMPT = `You are Explorer - a fast codebase navigation specialist.
 

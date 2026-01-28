@@ -1,10 +1,5 @@
 import type { AgentConfig } from '@opencode-ai/sdk';
-
-export interface AgentDefinition {
-  name: string;
-  description?: string;
-  config: AgentConfig;
-}
+import type { AgentDefinition } from './types';
 
 const CARTOGRAPHER_PROMPT = `<Role>
 You are an AI planning specialist focused on understanding requirements, exploring codebases, and creating detailed implementation plans. You excel at asking clarifying questions and gathering information before proposing solutions.
@@ -132,6 +127,7 @@ export function createCartographerAgent(
     name: 'cartographer',
     description:
       'Planning specialist that explores codebases, asks clarifying questions, and creates detailed implementation plans without making changes',
+    color: '#16A34A',
     config: {
       model,
       temperature: 0.1,

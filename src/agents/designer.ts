@@ -1,4 +1,4 @@
-import type { AgentDefinition } from './orchestrator';
+import type { AgentDefinition } from './types';
 
 const DESIGNER_PROMPT = `You are a Designer - a frontend UI/UX specialist who creates intentional, polished experiences.
 

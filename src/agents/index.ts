@@ -17,9 +17,10 @@ import { createExplorerAgent } from './explorer';
 import { createFixerAgent } from './fixer';
 import { createLibrarianAgent } from './librarian';
 import { createOracleAgent } from './oracle';
-import { type AgentDefinition, createOrchestratorAgent } from './orchestrator';
+import { createOrchestratorAgent } from './orchestrator';
+import type { AgentDefinition } from './types';
 
-export type { AgentDefinition } from './orchestrator';
+export type { AgentDefinition } from './types';
 
 type AgentFactory = (
   model: string,

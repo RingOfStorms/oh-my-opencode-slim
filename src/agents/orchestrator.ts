@@ -1,10 +1,5 @@
 import type { AgentConfig } from '@opencode-ai/sdk';
-
-export interface AgentDefinition {
-  name: string;
-  description?: string;
-  config: AgentConfig;
-}
+import type { AgentDefinition } from './types';
 
 const ORCHESTRATOR_PROMPT = `<Role>
 You are an AI coding orchestrator that coordinates specialists to complete tasks with optimal quality, speed, cost, and reliability. You plan, delegate, verify, and iterate until the task is complete.
@@ -147,6 +142,7 @@ export function createOrchestratorAgent(
     name: 'orchestrator',
     description:
       'AI coding orchestrator that delegates tasks to specialist agents for optimal quality, speed, and cost',
+    color: '#FF6600',
     config: {
       model,
       temperature: 0.1,
