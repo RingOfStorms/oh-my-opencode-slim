@@ -5,11 +5,13 @@ import {
   getAgentOverride,
   loadAgentPrompt,
   type PluginConfig,
+  PRIMARY_AGENT_NAMES,
   SUBAGENT_NAMES,
 } from '../config';
 import { getAgentMcpList } from '../config/agent-mcps';
 import { getSkillPermissionsForAgent } from '../cli/skills';
 
+import { createCartographerAgent } from './cartographer';
 import { createDesignerAgent } from './designer';
 import { createExplorerAgent } from './explorer';
 import { createFixerAgent } from './fixer';
@@ -40,19 +42,23 @@ function applyOverrides(
     agent.config.temperature = override.temperature;
 }
 
+type PermissionValue = 'ask' | 'allow' | 'deny';
+type PermissionRecord = Record<string, PermissionValue | Record<string, PermissionValue>>;
+
 /**
  * Apply default permissions to an agent.
  * Sets 'question' permission to 'allow' and includes skill permission presets.
  * If configuredSkills is provided, it honors that list instead of defaults.
+ *
+ * Also applies agent-specific tool and task permissions:
+ * - orchestrator: denies edit/write tools and question tool, allows all task delegations
+ * - cartographer: denies edit/write/bash tools, restricts task to read-only agents
  */
 function applyDefaultPermissions(
   agent: AgentDefinition,
   configuredSkills?: string[],
 ): void {
-  const existing = (agent.config.permission ?? {}) as Record<
-    string,
-    'ask' | 'allow' | 'deny' | Record<string, 'ask' | 'allow' | 'deny'>
-  >;
+  const existing = (agent.config.permission ?? {}) as PermissionRecord;
 
   // Get skill-specific permissions for this agent
   const skillPermissions = getSkillPermissionsForAgent(
@@ -60,23 +66,51 @@ function applyDefaultPermissions(
     configuredSkills,
   );
 
-  agent.config.permission = {
+  // Base permissions
+  const basePermissions: PermissionRecord = {
     ...existing,
     question: 'allow',
-    // Apply skill permissions as nested object under 'skill' key
     skill: {
       ...(typeof existing.skill === 'object' ? existing.skill : {}),
       ...skillPermissions,
     },
-  } as SDKAgentConfig['permission'];
+  };
+
+  // Apply agent-specific tool and task permissions
+  if (agent.name === 'orchestrator') {
+    // Orchestrator: no direct edits, no question tool (autonomous operation)
+    basePermissions.edit = 'deny';
+    basePermissions.write = 'deny';
+    basePermissions.question = 'deny';
+  } else if (agent.name === 'cartographer') {
+    // Cartographer: read-only, encourages questions, can only delegate to read-only agents
+    basePermissions.edit = 'deny';
+    basePermissions.write = 'deny';
+    basePermissions.bash = 'deny';
+    basePermissions.question = 'allow';
+    // Restrict task delegation to read-only agents only
+    basePermissions.task = {
+      '*': 'deny',
+      'explorer': 'allow',
+      'librarian': 'allow',
+      'oracle': 'allow',
+    };
+  }
+
+  agent.config.permission = basePermissions as SDKAgentConfig['permission'];
 }
 
 // Agent Classification
 
 export type SubagentName = (typeof SUBAGENT_NAMES)[number];
+export type PrimaryAgentName = (typeof PRIMARY_AGENT_NAMES)[number];
 
 export function isSubagent(name: string): name is SubagentName {
   return (SUBAGENT_NAMES as readonly string[]).includes(name);
+}
+
+export function isPrimaryAgent(name: string): name is PrimaryAgentName {
+  return (PRIMARY_AGENT_NAMES as readonly string[]).includes(name);
 }
 
 // Agent Factories
@@ -132,7 +166,10 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     return agent;
   });
 
-  // 3. Create Orchestrator (with its own overrides and custom prompts)
+  // 3. Create primary agents (orchestrator and cartographer)
+  const primaryAgents: AgentDefinition[] = [];
+
+  // Orchestrator
   const orchestratorModel =
     getAgentOverride(config, 'orchestrator')?.model ??
     DEFAULT_MODELS.orchestrator;
@@ -147,8 +184,26 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
   if (oOverride) {
     applyOverrides(orchestrator, oOverride);
   }
+  primaryAgents.push(orchestrator);
 
-  return [orchestrator, ...allSubAgents];
+  // Cartographer
+  const cartographerModel =
+    getAgentOverride(config, 'cartographer')?.model ??
+    DEFAULT_MODELS.cartographer;
+  const cartographerPrompts = loadAgentPrompt('cartographer');
+  const cartographer = createCartographerAgent(
+    cartographerModel,
+    cartographerPrompts.prompt,
+    cartographerPrompts.appendPrompt,
+  );
+  const cOverride = getAgentOverride(config, 'cartographer');
+  applyDefaultPermissions(cartographer, cOverride?.skills);
+  if (cOverride) {
+    applyOverrides(cartographer, cOverride);
+  }
+  primaryAgents.push(cartographer);
+
+  return [...primaryAgents, ...allSubAgents];
 }
 
 /**
@@ -173,7 +228,7 @@ export function getAgentConfigs(
       // Apply classification-based visibility and mode
       if (isSubagent(a.name)) {
         sdkConfig.mode = 'subagent';
-      } else if (a.name === 'orchestrator') {
+      } else if (isPrimaryAgent(a.name)) {
         sdkConfig.mode = 'primary';
       }
 
