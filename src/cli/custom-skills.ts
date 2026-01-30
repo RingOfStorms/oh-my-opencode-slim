@@ -34,6 +34,12 @@ export const CUSTOM_SKILLS: CustomSkill[] = [
     allowedAgents: ['orchestrator'],
     sourcePath: 'src/skills/cartography',
   },
+  {
+    name: 'prompt-engineer',
+    description: 'Research-backed prompt optimization techniques and anti-patterns',
+    allowedAgents: ['orchestrator'],
+    sourcePath: 'src/skills/prompt-engineer',
+  },
 ];
 
 /**
